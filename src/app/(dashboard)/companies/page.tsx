@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2, Users, Globe, Phone, Mail } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Building2, Plus, Pencil, Trash2, Globe, Phone, Mail, MapPin } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
 
 export default function CompaniesPage() {
@@ -31,8 +40,17 @@ export default function CompaniesPage() {
     website: "",
     phone: "",
     email: "",
-    address: "",
-    notes: "",
+    billingStreet: "",
+    billingCity: "",
+    billingDistrict: "",
+    billingPostalCode: "",
+    billingCountry: "",
+    shippingStreet: "",
+    shippingCity: "",
+    shippingDistrict: "",
+    shippingPostalCode: "",
+    shippingCountry: "",
+    description: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,15 +63,7 @@ export default function CompaniesPage() {
       }
       setIsDialogOpen(false);
       setEditingCompany(null);
-      setFormData({
-        name: "",
-        industry: "",
-        website: "",
-        phone: "",
-        email: "",
-        address: "",
-        notes: "",
-      });
+      resetForm();
     } catch (error) {
       console.error("Erro ao guardar empresa:", error);
     }
@@ -67,8 +77,17 @@ export default function CompaniesPage() {
       website: company.website || "",
       phone: company.phone || "",
       email: company.email || "",
-      address: company.address || "",
-      notes: company.notes || "",
+      billingStreet: company.billingStreet || "",
+      billingCity: company.billingCity || "",
+      billingDistrict: company.billingDistrict || "",
+      billingPostalCode: company.billingPostalCode || "",
+      billingCountry: company.billingCountry || "",
+      shippingStreet: company.shippingStreet || "",
+      shippingCity: company.shippingCity || "",
+      shippingDistrict: company.shippingDistrict || "",
+      shippingPostalCode: company.shippingPostalCode || "",
+      shippingCountry: company.shippingCountry || "",
+      description: company.description || "",
     });
     setIsDialogOpen(true);
   };
@@ -79,18 +98,48 @@ export default function CompaniesPage() {
     }
   };
 
-  const openNewDialog = () => {
-    setEditingCompany(null);
+  const resetForm = () => {
     setFormData({
       name: "",
       industry: "",
       website: "",
       phone: "",
       email: "",
-      address: "",
-      notes: "",
+      billingStreet: "",
+      billingCity: "",
+      billingDistrict: "",
+      billingPostalCode: "",
+      billingCountry: "",
+      shippingStreet: "",
+      shippingCity: "",
+      shippingDistrict: "",
+      shippingPostalCode: "",
+      shippingCountry: "",
+      description: "",
     });
+  };
+
+  const openNewDialog = () => {
+    setEditingCompany(null);
+    resetForm();
     setIsDialogOpen(true);
+  };
+
+  const formatAddress = (company: any, type: "billing" | "shipping") => {
+    const prefix = type === "billing" ? "billing" : "shipping";
+    const street = company[`${prefix}Street`];
+    const city = company[`${prefix}City`];
+    const district = company[`${prefix}District`];
+    const postalCode = company[`${prefix}PostalCode`];
+    const country = company[`${prefix}Country`];
+
+    const parts = [
+      street,
+      district ? `${district}` : null,
+      postalCode ? `${postalCode} ${city || ""}`.trim() : city,
+      country,
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(", ") : null;
   };
 
   if (!companies) {
@@ -110,80 +159,168 @@ export default function CompaniesPage() {
             <Plus className="h-4 w-4 mr-2" />
             Nova Empresa
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingCompany ? "Editar Empresa" : "Nova Empresa"}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Informações Básicas */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className="text-sm font-medium">Nome *</label>
+                <div>
+                  <Label>Nome *</Label>
                   <Input
                     value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Setor</label>
-                  <Input
-                    value={formData.industry}
-                    onChange={(e) =>
-                      setFormData({ ...formData, industry: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Website</label>
+                  <Label>Website</Label>
                   <Input
                     value={formData.website}
-                    onChange={(e) =>
-                      setFormData({ ...formData, website: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                    placeholder="https://..."
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Telefone</label>
-                  <Input
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Email</label>
+                  <Label>Email</Label>
                   <Input
                     type="email"
                     value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
                 </div>
-                <div className="col-span-2">
-                  <label className="text-sm font-medium">Morada</label>
+                <div>
+                  <Label>Telefone</Label>
                   <Input
-                    value={formData.address}
-                    onChange={(e) =>
-                      setFormData({ ...formData, address: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="text-sm font-medium">Notas</label>
-                  <Input
-                    value={formData.notes}
-                    onChange={(e) =>
-                      setFormData({ ...formData, notes: e.target.value })
-                    }
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   />
                 </div>
               </div>
+
+              {/* Endereço de Faturação */}
+              <div className="border rounded-lg p-4">
+                <h3 className="font-semibold mb-4 text-sm uppercase text-muted-foreground">
+                  Endereço de faturação
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <Label>Rua</Label>
+                    <Input
+                      value={formData.billingStreet}
+                      onChange={(e) => setFormData({ ...formData, billingStreet: e.target.value })}
+                      placeholder="Rua, Avenida, etc."
+                    />
+                  </div>
+                  <div>
+                    <Label>Cidade</Label>
+                    <Input
+                      value={formData.billingCity}
+                      onChange={(e) => setFormData({ ...formData, billingCity: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Distrito</Label>
+                    <Input
+                      value={formData.billingDistrict}
+                      onChange={(e) => setFormData({ ...formData, billingDistrict: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Código postal</Label>
+                    <Input
+                      value={formData.billingPostalCode}
+                      onChange={(e) => setFormData({ ...formData, billingPostalCode: e.target.value })}
+                      placeholder="0000-000"
+                    />
+                  </div>
+                  <div>
+                    <Label>País</Label>
+                    <Input
+                      value={formData.billingCountry}
+                      onChange={(e) => setFormData({ ...formData, billingCountry: e.target.value })}
+                      placeholder="Portugal"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Endereço de Envio */}
+              <div className="border rounded-lg p-4">
+                <h3 className="font-semibold mb-4 text-sm uppercase text-muted-foreground">
+                  Endereço de envio
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <Label>Rua</Label>
+                    <Input
+                      value={formData.shippingStreet}
+                      onChange={(e) => setFormData({ ...formData, shippingStreet: e.target.value })}
+                      placeholder="Rua, Avenida, etc."
+                    />
+                  </div>
+                  <div>
+                    <Label>Cidade</Label>
+                    <Input
+                      value={formData.shippingCity}
+                      onChange={(e) => setFormData({ ...formData, shippingCity: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Distrito</Label>
+                    <Input
+                      value={formData.shippingDistrict}
+                      onChange={(e) => setFormData({ ...formData, shippingDistrict: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Código postal</Label>
+                    <Input
+                      value={formData.shippingPostalCode}
+                      onChange={(e) => setFormData({ ...formData, shippingPostalCode: e.target.value })}
+                      placeholder="0000-000"
+                    />
+                  </div>
+                  <div>
+                    <Label>País</Label>
+                    <Input
+                      value={formData.shippingCountry}
+                      onChange={(e) => setFormData({ ...formData, shippingCountry: e.target.value })}
+                      placeholder="Portugal"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Details */}
+              <div className="border rounded-lg p-4">
+                <h3 className="font-semibold mb-4 text-sm uppercase text-muted-foreground">
+                  Detalhes
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Indústria</Label>
+                    <Input
+                      value={formData.industry}
+                      onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                      placeholder="Ex: Tecnologia, Saúde, Finanças"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label>Descrição</Label>
+                    <Textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      rows={4}
+                      placeholder="Informações adicionais sobre a empresa..."
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="flex justify-end gap-2">
                 <Button
                   type="button"
@@ -263,9 +400,25 @@ export default function CompaniesPage() {
                     {company.email}
                   </div>
                 )}
-                {company.address && (
-                  <p className="text-sm text-muted-foreground">
-                    {company.address}
+                {formatAddress(company, "billing") && (
+                  <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <MapPin className="h-4 w-4 mt-0.5" />
+                    <div>
+                      {company.billingStreet && <p>{company.billingStreet}</p>}
+                      {(company.billingDistrict || company.billingPostalCode || company.billingCity) && (
+                        <p>
+                          {company.billingDistrict && `${company.billingDistrict}, `}
+                          {company.billingPostalCode && `${company.billingPostalCode} `}
+                          {company.billingCity}
+                        </p>
+                      )}
+                      {company.billingCountry && <p>{company.billingCountry}</p>}
+                    </div>
+                  </div>
+                )}
+                {company.description && (
+                  <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
+                    {company.description}
                   </p>
                 )}
               </CardContent>

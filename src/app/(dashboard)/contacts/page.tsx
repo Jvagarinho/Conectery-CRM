@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, MapPin } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
 
 const statusOptions = [
@@ -48,6 +48,16 @@ export default function ContactsPage() {
     phone: "",
     companyId: "" as string,
     company: "",
+    billingStreet: "",
+    billingCity: "",
+    billingDistrict: "",
+    billingPostalCode: "",
+    billingCountry: "",
+    shippingStreet: "",
+    shippingCity: "",
+    shippingDistrict: "",
+    shippingPostalCode: "",
+    shippingCountry: "",
     status: "lead" as "lead" | "prospect" | "client" | "inactive",
     source: "",
     notes: "",
@@ -66,6 +76,23 @@ export default function ContactsPage() {
     return company?.name || null;
   };
 
+  const formatAddress = (contact: any, type: "billing" | "shipping") => {
+    const prefix = type === "billing" ? "billing" : "shipping";
+    const street = contact[`${prefix}Street`];
+    const city = contact[`${prefix}City`];
+    const district = contact[`${prefix}District`];
+    const postalCode = contact[`${prefix}PostalCode`];
+    const country = contact[`${prefix}Country`];
+
+    const parts = [
+      street,
+      district ? `${district}` : null,
+      postalCode ? `${postalCode} ${city || ""}`.trim() : city,
+      country,
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(", ") : null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -75,6 +102,16 @@ export default function ContactsPage() {
       phone: formData.phone || undefined,
       companyId: (formData.companyId as Id<"companies">) || undefined,
       company: formData.company || undefined,
+      billingStreet: formData.billingStreet || undefined,
+      billingCity: formData.billingCity || undefined,
+      billingDistrict: formData.billingDistrict || undefined,
+      billingPostalCode: formData.billingPostalCode || undefined,
+      billingCountry: formData.billingCountry || undefined,
+      shippingStreet: formData.shippingStreet || undefined,
+      shippingCity: formData.shippingCity || undefined,
+      shippingDistrict: formData.shippingDistrict || undefined,
+      shippingPostalCode: formData.shippingPostalCode || undefined,
+      shippingCountry: formData.shippingCountry || undefined,
       status: formData.status,
       source: formData.source || undefined,
       notes: formData.notes || undefined,
@@ -87,16 +124,7 @@ export default function ContactsPage() {
     }
     setIsDialogOpen(false);
     setEditingContact(null);
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      companyId: "",
-      company: "",
-      status: "lead",
-      source: "",
-      notes: "",
-    });
+    resetForm();
   };
 
   const handleEdit = (contact: NonNullable<typeof contacts>[0]) => {
@@ -107,6 +135,16 @@ export default function ContactsPage() {
       phone: contact.phone || "",
       companyId: contact.companyId || "",
       company: contact.company || "",
+      billingStreet: contact.billingStreet || "",
+      billingCity: contact.billingCity || "",
+      billingDistrict: contact.billingDistrict || "",
+      billingPostalCode: contact.billingPostalCode || "",
+      billingCountry: contact.billingCountry || "",
+      shippingStreet: contact.shippingStreet || "",
+      shippingCity: contact.shippingCity || "",
+      shippingDistrict: contact.shippingDistrict || "",
+      shippingPostalCode: contact.shippingPostalCode || "",
+      shippingCountry: contact.shippingCountry || "",
       status: contact.status,
       source: contact.source || "",
       notes: contact.notes || "",
@@ -118,6 +156,29 @@ export default function ContactsPage() {
     if (confirm("Tem certeza que deseja eliminar este contacto?")) {
       await deleteContact({ id });
     }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      companyId: "",
+      company: "",
+      billingStreet: "",
+      billingCity: "",
+      billingDistrict: "",
+      billingPostalCode: "",
+      billingCountry: "",
+      shippingStreet: "",
+      shippingCity: "",
+      shippingDistrict: "",
+      shippingPostalCode: "",
+      shippingCountry: "",
+      status: "lead",
+      source: "",
+      notes: "",
+    });
   };
 
   const getStatusStyle = (status: string) => {
@@ -133,123 +194,196 @@ export default function ContactsPage() {
             <Plus className="h-4 w-4 mr-2" />
             Novo Contacto
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingContact ? "Editar Contacto" : "Novo Contacto"}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Informações Básicas */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Nome *</Label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Telemóvel</Label>
+                  <Input
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Empresa</Label>
+                  <Select
+                    value={formData.companyId}
+                    onValueChange={(value) => {
+                      const selectedCompany = companies?.find((c) => c._id === value);
+                      setFormData({
+                        ...formData,
+                        companyId: value ?? "",
+                        company: selectedCompany?.name || "",
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecionar empresa..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {companies?.map((company) => (
+                        <SelectItem key={company._id} value={company._id}>
+                          {company.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Estado</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) => {
+                      if (value === "lead" || value === "prospect" || value === "client" || value === "inactive") {
+                        setFormData({ ...formData, status: value });
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="lead">Lead</SelectItem>
+                      <SelectItem value="prospect">Prospecto</SelectItem>
+                      <SelectItem value="client">Cliente</SelectItem>
+                      <SelectItem value="inactive">Inativo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Origem</Label>
+                  <Input
+                    value={formData.source}
+                    onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                    placeholder="Ex: Website, Referência, LinkedIn"
+                  />
+                </div>
+              </div>
+
+              {/* Endereço de Faturação */}
+              <div className="border rounded-lg p-4">
+                <h3 className="font-semibold mb-4 text-sm uppercase text-muted-foreground">
+                  Endereço de faturação
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <Label>Rua</Label>
+                    <Input
+                      value={formData.billingStreet}
+                      onChange={(e) => setFormData({ ...formData, billingStreet: e.target.value })}
+                      placeholder="Rua, Avenida, etc."
+                    />
+                  </div>
+                  <div>
+                    <Label>Cidade</Label>
+                    <Input
+                      value={formData.billingCity}
+                      onChange={(e) => setFormData({ ...formData, billingCity: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Distrito</Label>
+                    <Input
+                      value={formData.billingDistrict}
+                      onChange={(e) => setFormData({ ...formData, billingDistrict: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Código postal</Label>
+                    <Input
+                      value={formData.billingPostalCode}
+                      onChange={(e) => setFormData({ ...formData, billingPostalCode: e.target.value })}
+                      placeholder="0000-000"
+                    />
+                  </div>
+                  <div>
+                    <Label>País</Label>
+                    <Input
+                      value={formData.billingCountry}
+                      onChange={(e) => setFormData({ ...formData, billingCountry: e.target.value })}
+                      placeholder="Portugal"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Endereço de Envio */}
+              <div className="border rounded-lg p-4">
+                <h3 className="font-semibold mb-4 text-sm uppercase text-muted-foreground">
+                  Endereço de envio
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <Label>Rua</Label>
+                    <Input
+                      value={formData.shippingStreet}
+                      onChange={(e) => setFormData({ ...formData, shippingStreet: e.target.value })}
+                      placeholder="Rua, Avenida, etc."
+                    />
+                  </div>
+                  <div>
+                    <Label>Cidade</Label>
+                    <Input
+                      value={formData.shippingCity}
+                      onChange={(e) => setFormData({ ...formData, shippingCity: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Distrito</Label>
+                    <Input
+                      value={formData.shippingDistrict}
+                      onChange={(e) => setFormData({ ...formData, shippingDistrict: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Código postal</Label>
+                    <Input
+                      value={formData.shippingPostalCode}
+                      onChange={(e) => setFormData({ ...formData, shippingPostalCode: e.target.value })}
+                      placeholder="0000-000"
+                    />
+                  </div>
+                  <div>
+                    <Label>País</Label>
+                    <Input
+                      value={formData.shippingCountry}
+                      onChange={(e) => setFormData({ ...formData, shippingCountry: e.target.value })}
+                      placeholder="Portugal"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div>
-                <Label htmlFor="name">Nome *</Label>
+                <Label>Notas</Label>
                 <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="phone">Telefone</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="companyId">Empresa</Label>
-                <Select
-                  value={formData.companyId}
-                  onValueChange={(value) => {
-                    const selectedCompany = companies?.find((c) => c._id === value);
-                    setFormData({
-                      ...formData,
-                      companyId: value ?? "",
-                      company: selectedCompany?.name || "",
-                    });
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar empresa..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companies?.map((company) => (
-                      <SelectItem key={company._id} value={company._id}>
-                        {company.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="company">Nome da Empresa (manual)</Label>
-                <Input
-                  id="company"
-                  value={formData.company}
-                  onChange={(e) =>
-                    setFormData({ ...formData, company: e.target.value })
-                  }
-                  placeholder="Se não encontrou a empresa na lista"
-                />
-              </div>
-              <div>
-                <Label htmlFor="status">Estado</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) => {
-                    if (value === "lead" || value === "prospect" || value === "client" || value === "inactive") {
-                      setFormData({ ...formData, status: value });
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="lead">Lead</SelectItem>
-                    <SelectItem value="prospect">Prospecto</SelectItem>
-                    <SelectItem value="client">Cliente</SelectItem>
-                    <SelectItem value="inactive">Inativo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="source">Origem</Label>
-                <Input
-                  id="source"
-                  value={formData.source}
-                  onChange={(e) =>
-                    setFormData({ ...formData, source: e.target.value })
-                  }
-                  placeholder="Ex: Website, Referência, LinkedIn"
-                />
-              </div>
-              <div>
-                <Label htmlFor="notes">Notas</Label>
-                <Input
-                  id="notes"
                   value={formData.notes}
-                  onChange={(e) =>
-                    setFormData({ ...formData, notes: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 />
               </div>
+
               <Button type="submit" className="w-full">
                 {editingContact ? "Guardar" : "Criar"}
               </Button>
@@ -278,6 +412,7 @@ export default function ContactsPage() {
               <th className="text-left p-4">Email</th>
               <th className="text-left p-4">Telefone</th>
               <th className="text-left p-4">Empresa</th>
+              <th className="text-left p-4">Morada</th>
               <th className="text-left p-4">Estado</th>
               <th className="text-left p-4">Ações</th>
             </tr>
@@ -290,6 +425,16 @@ export default function ContactsPage() {
                 <td className="p-4 text-gray-600">{contact.phone || "-"}</td>
                 <td className="p-4 text-gray-600">
                   {getCompanyName(contact.companyId) || contact.company || "-"}
+                </td>
+                <td className="p-4 text-gray-600">
+                  {formatAddress(contact, "billing") ? (
+                    <div className="flex items-start gap-1">
+                      <MapPin className="h-3 w-3 mt-0.5 text-muted-foreground" />
+                      <span className="text-xs">{formatAddress(contact, "billing")}</span>
+                    </div>
+                  ) : (
+                    "-"
+                  )}
                 </td>
                 <td className="p-4">
                   <span
